@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "simple_godot_exporter"
-version = "0.3.0"
+version = "0.3.1"
 name = "Simple Godot Exporter"
 tagline = "Bake textures and export a collection to GLB for Godot"
 maintainer = "dukcs"

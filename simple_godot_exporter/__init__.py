@@ -69,8 +69,21 @@ class SGE_Props(bpy.types.PropertyGroup):
 
 
 # ---------------------------------------------------------------------------
-# Operator
+# Operators
 # ---------------------------------------------------------------------------
+
+def default_glb_path(context):
+    """<default export folder>/<blend name>.glb, or next to the .blend.
+    Returns None when the file has never been saved."""
+    if not bpy.data.filepath:
+        return None
+    prefs = context.preferences.addons[__package__].preferences
+    if prefs.default_dir:
+        stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
+        return os.path.join(bpy.path.abspath(prefs.default_dir),
+                            stem + ".glb")
+    return os.path.splitext(bpy.data.filepath)[0] + ".glb"
+
 
 class SGE_OT_export(bpy.types.Operator):
     bl_idname = "sge.export_to_godot"
@@ -87,20 +100,14 @@ class SGE_OT_export(bpy.types.Operator):
             self.report({'ERROR'}, "No collection selected (or it is empty)")
             return {'CANCELLED'}
 
-        prefs = context.preferences.addons[__package__].preferences
         if props.export_path:
             glb_path = bpy.path.abspath(props.export_path)
         else:
-            if not bpy.data.filepath:
+            glb_path = default_glb_path(context)
+            if glb_path is None:
                 self.report({'ERROR'}, "Save the .blend first, or set an "
                                        "output file path")
                 return {'CANCELLED'}
-            stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
-            if prefs.default_dir:
-                glb_path = os.path.join(
-                    bpy.path.abspath(prefs.default_dir), stem + ".glb")
-            else:
-                glb_path = os.path.splitext(bpy.data.filepath)[0] + ".glb"
         if not glb_path.lower().endswith(".glb"):
             glb_path += ".glb"
         out_dir = os.path.dirname(glb_path)
@@ -146,6 +153,21 @@ class SGE_OT_export(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class SGE_OT_reset_path(bpy.types.Operator):
+    bl_idname = "sge.reset_export_path"
+    bl_label = "Reset Output File"
+    bl_description = ("Reset the output file to the default: "
+                      "<default export folder>/<blend name>.glb")
+
+    def execute(self, context):
+        path = default_glb_path(context)
+        if path is None:
+            self.report({'ERROR'}, "Save the .blend first")
+            return {'CANCELLED'}
+        context.scene.sge_props.export_path = path
+        return {'FINISHED'}
+
+
 # ---------------------------------------------------------------------------
 # UI
 # ---------------------------------------------------------------------------
@@ -161,7 +183,10 @@ class SGE_PT_panel(bpy.types.Panel):
         props = context.scene.sge_props
 
         layout.prop(props, "collection")
-        layout.prop(props, "export_path")
+        row = layout.row(align=True)
+        row.prop(props, "export_path")
+        row.operator(SGE_OT_reset_path.bl_idname, text="",
+                     icon='FILE_REFRESH')
         layout.prop(props, "resolution")
         layout.prop(props, "samples")
         layout.separator()
@@ -172,7 +197,8 @@ class SGE_PT_panel(bpy.types.Panel):
 # Registration
 # ---------------------------------------------------------------------------
 
-classes = (SGE_Prefs, SGE_Props, SGE_OT_export, SGE_PT_panel)
+classes = (SGE_Prefs, SGE_Props, SGE_OT_export, SGE_OT_reset_path,
+           SGE_PT_panel)
 
 
 def register():
