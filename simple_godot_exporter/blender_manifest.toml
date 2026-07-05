@@ -1,0 +1,14 @@
+schema_version = "1.0.0"
+
+id = "simple_godot_exporter"
+version = "0.2.0"
+name = "Simple Godot Exporter"
+tagline = "Bake textures and export a collection to GLB for Godot"
+maintainer = "dukcs"
+type = "add-on"
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:MIT"]
+
+tags = ["Import-Export", "Bake"]
