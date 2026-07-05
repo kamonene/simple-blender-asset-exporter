@@ -150,13 +150,15 @@ def main():
             s.material and s.material.use_nodes for s in o.material_slots)
     ]
 
+    image = None
     if mesh_objs:
         for obj in mesh_objs:
             ensure_uvs(context, obj)
         pack_uvs(context, mesh_objs)
 
-        stem = os.path.splitext(os.path.basename(glb_path))[0]
-        image = bpy.data.images.new(stem, res, res)
+        # Godot names extracted textures "<glb>_<image name>.png", so keep
+        # the embedded image name generic to avoid "name_name.png"
+        image = bpy.data.images.new("albedo", res, res)
         image.colorspace_settings.name = 'sRGB'
 
         # bake every slot first, replace after: swapping a slot early would
@@ -174,13 +176,6 @@ def main():
         for slot, baked in replacements:
             slot.material = baked
 
-        if save_textures:
-            tex_dir = os.path.join(os.path.dirname(glb_path), "textures")
-            os.makedirs(tex_dir, exist_ok=True)
-            image.filepath_raw = os.path.join(tex_dir, image.name + ".png")
-            image.file_format = 'PNG'
-            image.save()
-
     bpy.ops.object.select_all(action='DESELECT')
     for obj in objs:
         try:
@@ -194,6 +189,17 @@ def main():
         use_selection=True,
         export_apply=True,
     )
+
+    # save the PNG only after the export: once the image has a file path,
+    # the glTF exporter would name the embedded texture after it
+    if save_textures and image is not None:
+        stem = os.path.splitext(os.path.basename(glb_path))[0]
+        tex_dir = os.path.join(os.path.dirname(glb_path), "textures")
+        os.makedirs(tex_dir, exist_ok=True)
+        image.filepath_raw = os.path.join(tex_dir, stem + ".png")
+        image.file_format = 'PNG'
+        image.save()
+
     print("PIPELINE OK:", glb_path)
 
 
