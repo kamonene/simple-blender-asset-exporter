@@ -15,6 +15,26 @@ import bpy
 
 
 # ---------------------------------------------------------------------------
+# Preferences
+# ---------------------------------------------------------------------------
+
+class SGE_Prefs(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    default_dir: bpy.props.StringProperty(
+        name="Default Export Folder",
+        subtype='DIR_PATH',
+        default="",
+        description="Used when Output File is empty: the GLB is written "
+                    "here, named after the .blend file (e.g. your Godot "
+                    "project's asset folder)",
+    )
+
+    def draw(self, context):
+        self.layout.prop(self, "default_dir")
+
+
+# ---------------------------------------------------------------------------
 # Properties
 # ---------------------------------------------------------------------------
 
@@ -67,6 +87,7 @@ class SGE_OT_export(bpy.types.Operator):
             self.report({'ERROR'}, "No collection selected (or it is empty)")
             return {'CANCELLED'}
 
+        prefs = context.preferences.addons[__package__].preferences
         if props.export_path:
             glb_path = bpy.path.abspath(props.export_path)
         else:
@@ -74,7 +95,12 @@ class SGE_OT_export(bpy.types.Operator):
                 self.report({'ERROR'}, "Save the .blend first, or set an "
                                        "output file path")
                 return {'CANCELLED'}
-            glb_path = os.path.splitext(bpy.data.filepath)[0] + ".glb"
+            stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
+            if prefs.default_dir:
+                glb_path = os.path.join(
+                    bpy.path.abspath(prefs.default_dir), stem + ".glb")
+            else:
+                glb_path = os.path.splitext(bpy.data.filepath)[0] + ".glb"
         if not glb_path.lower().endswith(".glb"):
             glb_path += ".glb"
         out_dir = os.path.dirname(glb_path)
@@ -146,7 +172,7 @@ class SGE_PT_panel(bpy.types.Panel):
 # Registration
 # ---------------------------------------------------------------------------
 
-classes = (SGE_Props, SGE_OT_export, SGE_PT_panel)
+classes = (SGE_Prefs, SGE_Props, SGE_OT_export, SGE_PT_panel)
 
 
 def register():

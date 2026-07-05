@@ -24,8 +24,15 @@ Then in Blender: **Edit → Preferences → Get Extensions → ⌄ (top-right) �
 Install from Disk…** and pick the zip. Or from the command line:
 
 ```sh
-blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.2.1.zip
+blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.3.0.zip
 ```
+
+## Settings
+
+In **Edit → Preferences → Add-ons → Simple Godot Exporter** you can set a
+**Default Export Folder** (e.g. your Godot project's asset folder). With it
+set, leaving Output File empty exports `<blend name>.glb` into that folder;
+without it, the GLB lands next to the .blend file.
 
 ## Use
 
