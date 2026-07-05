@@ -24,7 +24,7 @@ Then in Blender: **Edit → Preferences → Get Extensions → ⌄ (top-right) �
 Install from Disk…** and pick the zip. Or from the command line:
 
 ```sh
-blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.3.1.zip
+blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.3.2.zip
 ```
 
 ## Settings
@@ -34,6 +34,11 @@ In **Edit → Preferences → Add-ons → Simple Godot Exporter** you can set a
 set, leaving Output File empty exports `<blend name>.glb` into that folder;
 without it, the GLB lands next to the .blend file. The refresh button next
 to Output File fills the field with that default path.
+
+**Relative Folder** mirrors your folder structure into the export folder:
+with relative folder `godot`, a file at `godot/birds/pigeons/pigeon1.blend`
+exports to `<default folder>/birds/pigeons/pigeon1.glb`. If the folder
+isn't in the .blend's path, it's ignored.
 
 ## Use
 

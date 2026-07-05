@@ -29,9 +29,20 @@ class SGE_Prefs(bpy.types.AddonPreferences):
                     "here, named after the .blend file (e.g. your Godot "
                     "project's asset folder)",
     )
+    relative_folder: bpy.props.StringProperty(
+        name="Relative Folder",
+        default="",
+        description="Folder name to look for in the .blend file's path; "
+                    "the structure below it is mirrored inside the default "
+                    "export folder. E.g. with relative folder 'godot', "
+                    "godot/birds/pigeons/pigeon1.blend exports to "
+                    "<default folder>/birds/pigeons/pigeon1.glb. Ignored "
+                    "when the folder is not in the path",
+    )
 
     def draw(self, context):
         self.layout.prop(self, "default_dir")
+        self.layout.prop(self, "relative_folder")
 
 
 # ---------------------------------------------------------------------------
@@ -74,15 +85,28 @@ class SGE_Props(bpy.types.PropertyGroup):
 
 def default_glb_path(context):
     """<default export folder>/<blend name>.glb, or next to the .blend.
+
+    When the Relative Folder preference is set and found in the .blend's
+    path, the directories below it are mirrored inside the export folder.
     Returns None when the file has never been saved."""
     if not bpy.data.filepath:
         return None
     prefs = context.preferences.addons[__package__].preferences
-    if prefs.default_dir:
-        stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
-        return os.path.join(bpy.path.abspath(prefs.default_dir),
-                            stem + ".glb")
-    return os.path.splitext(bpy.data.filepath)[0] + ".glb"
+    if not prefs.default_dir:
+        return os.path.splitext(bpy.data.filepath)[0] + ".glb"
+
+    stem = os.path.splitext(os.path.basename(bpy.data.filepath))[0]
+    subdir = ""
+    anchor = prefs.relative_folder.strip().strip("/\\")
+    if anchor:
+        parts = os.path.normpath(
+            os.path.dirname(bpy.data.filepath)).split(os.sep)
+        if anchor in parts:
+            # last occurrence: the one closest to the file wins
+            idx = len(parts) - 1 - parts[::-1].index(anchor)
+            subdir = os.sep.join(parts[idx + 1:])
+    return os.path.join(bpy.path.abspath(prefs.default_dir),
+                        subdir, stem + ".glb")
 
 
 class SGE_OT_export(bpy.types.Operator):
