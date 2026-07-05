@@ -11,7 +11,6 @@ plain values.
 """
 
 import math
-import os
 import sys
 import traceback
 
@@ -115,10 +114,9 @@ def make_baked_material(name, source_mat, image):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:]
-    glb_path, col_name, res_str, samples_str, save_tex_str = argv
+    glb_path, col_name, res_str, samples_str = argv
     res = int(res_str)
     samples = int(samples_str)
-    save_textures = save_tex_str == "1"
 
     context = bpy.context
     scene = context.scene
@@ -150,7 +148,6 @@ def main():
             s.material and s.material.use_nodes for s in o.material_slots)
     ]
 
-    image = None
     if mesh_objs:
         for obj in mesh_objs:
             ensure_uvs(context, obj)
@@ -189,17 +186,6 @@ def main():
         use_selection=True,
         export_apply=True,
     )
-
-    # save the PNG only after the export: once the image has a file path,
-    # the glTF exporter would name the embedded texture after it
-    if save_textures and image is not None:
-        stem = os.path.splitext(os.path.basename(glb_path))[0]
-        tex_dir = os.path.join(os.path.dirname(glb_path), "textures")
-        os.makedirs(tex_dir, exist_ok=True)
-        image.filepath_raw = os.path.join(tex_dir, stem + ".png")
-        image.file_format = 'PNG'
-        image.save()
-
     print("PIPELINE OK:", glb_path)
 
 

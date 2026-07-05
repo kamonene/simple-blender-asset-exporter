@@ -24,7 +24,7 @@ Then in Blender: **Edit → Preferences → Get Extensions → ⌄ (top-right) �
 Install from Disk…** and pick the zip. Or from the command line:
 
 ```sh
-blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.2.0.zip
+blender --command extension install-file -r user_default -e dist/simple_godot_exporter-0.2.1.zip
 ```
 
 ## Use
@@ -34,15 +34,15 @@ blender --command extension install-file -r user_default -e dist/simple_godot_ex
    the output `.glb` path, bake size and samples.
 3. Click **Export to Godot**.
 
-The GLB lands at the chosen path with the texture embedded; if **Save
-Texture** is on, the baked PNG is also written to a `textures/` folder
-next to it, replacing any existing one. Drop the `.glb` into your Godot
-project and it imports as a scene with StandardMaterial3D materials.
+The GLB lands at the chosen path with the single baked texture embedded —
+one file, one image. Drop the `.glb` into your Godot project and it
+imports as a scene with StandardMaterial3D materials; use Godot's
+"Extract Textures" on import if you want the PNG as a separate file.
 
 ## Notes
 
 - Everything is packed into one shared UV atlas and baked into a single
-  color texture named after the GLB. Re-exporting replaces the same file.
+  color texture embedded in the GLB. Re-exporting replaces the file.
 - Emission-shader materials (a common flat-shading setup) are baked via the
   emission pass so their colors come through instead of baking black.
 - Materials are still replaced per slot, so each keeps its own properties —

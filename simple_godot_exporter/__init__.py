@@ -46,12 +46,6 @@ class SGE_Props(bpy.types.PropertyGroup):
         default=16, min=1, max=4096,
         description="Cycles samples used while baking",
     )
-    save_textures: bpy.props.BoolProperty(
-        name="Save Texture",
-        default=True,
-        description="Also save the baked PNG next to the GLB "
-                    "(in a 'textures' folder), replacing any existing one",
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +103,6 @@ class SGE_OT_export(bpy.types.Operator):
                 source_col.name,
                 props.resolution,
                 str(props.samples),
-                "1" if props.save_textures else "0",
             ]
             proc = subprocess.run(cmd, capture_output=True, text=True)
         finally:
@@ -145,7 +138,6 @@ class SGE_PT_panel(bpy.types.Panel):
         layout.prop(props, "export_path")
         layout.prop(props, "resolution")
         layout.prop(props, "samples")
-        layout.prop(props, "save_textures")
         layout.separator()
         layout.operator(SGE_OT_export.bl_idname, icon='EXPORT')
 
