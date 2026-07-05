@@ -47,6 +47,9 @@ imports as a scene with StandardMaterial3D materials; use Godot's
   emission pass so their colors come through instead of baking black.
 - Materials are still replaced per slot, so each keeps its own properties —
   a transparent glass material stays transparent.
+- Transmission glass is converted to alpha-blended glass (alpha =
+  1 − transmission, min 0.15), since game engines don't render glTF
+  transmission. Its base color still bakes correctly.
 - Roughness, metallic, alpha and IOR are carried over as plain values from
   the source materials; procedural maps for those channels are not baked.
 - Objects without UVs get an automatic Smart UV Project unwrap.

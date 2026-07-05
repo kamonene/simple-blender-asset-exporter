@@ -78,7 +78,32 @@ def bake_albedo(context, obj, mat, image):
     tree.nodes.remove(node)
 
 
-def make_baked_material(name, source_mat, image):
+def neutralize_transmission(mesh_objs):
+    """Read and zero out Transmission Weight on every material.
+
+    Transmissive surfaces have no diffuse lobe, so their base color would
+    bake black; zeroing transmission first lets the color come through.
+    Returns {material name: transmission} so it can be converted to alpha
+    on the baked materials (Godot does not support glTF transmission).
+    """
+    values = {}
+    for obj in mesh_objs:
+        for slot in obj.material_slots:
+            mat = slot.material
+            if mat is None or not mat.use_nodes or mat.name in values:
+                continue
+            transmission = 0.0
+            bsdf = find_node(mat, 'BSDF_PRINCIPLED')
+            if bsdf is not None:
+                sock = bsdf.inputs.get('Transmission Weight')
+                if sock is not None and not sock.is_linked:
+                    transmission = sock.default_value
+                    sock.default_value = 0.0
+            values[mat.name] = transmission
+    return values
+
+
+def make_baked_material(name, source_mat, image, transmission=0.0):
     mat = bpy.data.materials.new(name + "_baked")
     mat.use_nodes = True
     tree = mat.node_tree
@@ -100,8 +125,14 @@ def make_baked_material(name, source_mat, image):
         src_input = src_bsdf.inputs[socket]
         if not src_input.is_linked:
             bsdf.inputs[socket].default_value = src_input.default_value
-    if (not src_bsdf.inputs['Alpha'].is_linked
-            and src_bsdf.inputs['Alpha'].default_value < 1.0):
+
+    # game-engine glass: approximate transmission with alpha blending,
+    # keeping a bit of visibility so the surface doesn't vanish
+    alpha = bsdf.inputs['Alpha'].default_value
+    if transmission > 0.0:
+        alpha = min(alpha, max(1.0 - transmission, 0.15))
+        bsdf.inputs['Alpha'].default_value = alpha
+    if alpha < 1.0:
         for attr, value in (('blend_method', 'BLEND'),
                             ('surface_render_method', 'BLENDED')):
             if hasattr(mat, attr):
@@ -152,6 +183,7 @@ def main():
         for obj in mesh_objs:
             ensure_uvs(context, obj)
         pack_uvs(context, mesh_objs)
+        transmissions = neutralize_transmission(mesh_objs)
 
         # Godot names extracted textures "<glb>_<image name>.png", so keep
         # the embedded image name generic to avoid "name_name.png"
@@ -167,8 +199,9 @@ def main():
                 if mat is None or not mat.use_nodes:
                     continue
                 bake_albedo(context, obj, mat, image)
-                baked = make_baked_material(f"{obj.name}_{mat.name}",
-                                            mat, image)
+                baked = make_baked_material(
+                    f"{obj.name}_{mat.name}", mat, image,
+                    transmissions.get(mat.name, 0.0))
                 replacements.append((slot, baked))
         for slot, baked in replacements:
             slot.material = baked
